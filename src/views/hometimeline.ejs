@@ -1,0 +1,110 @@
+<html>
+<body>
+<form>
+  
+<table>
+<script>
+  </script>
+<%for(let i=0;i<hometimeline.length;i++){%>
+    <%for(key in hometimeline[i]){%>
+      <%if(key=="uname"){%>
+        <label><b>uname=</b></label>
+        <%}
+      else if(key=="tweets"){%>
+        <label><b>Tweet=</b></label>
+      <%}
+      else if(key=="tweet_time"){%>
+        <label><b>Time=</b></label>
+      <%}
+      else if(key=="tweet_id"){%>
+        <input type="hidden" name='tweet_id' value="<%=hometimeline[i][key]%>">
+        
+      <%continue}
+      else if(key=='likes'){%>
+        <input type="button" id="like_<%=hometimeline[i][key]%>"  value="like <%=hometimeline[i][key]%>" onclick="dolike('<%=hometimeline[i].tweet_id%>' ,<%=hometimeline[i][key]%>,'like_<%=hometimeline[i][key]%>')">
+        <input type="button" id="comments"  value="comments" onclick="comments_adding('<%=hometimeline[i].tweet_id%>','comments_<%=hometimeline[i][key]%>')">
+        <div id="comments_<%=hometimeline[i][key]%>"></div>
+      <% continue}%>
+      <%=hometimeline[i][key]%>
+      <br>
+  <%}%>
+  <br>
+  <br>
+<%}%>  
+</table>
+</form>
+
+<script>
+async function dolike(tweet_id,likecount,buttonid)
+{
+ 
+  let data=JSON.parse(await ajaxcalling('POST','/like',tweet_id))
+  if(data['data'].id!="already")
+  {
+    document.getElementById(buttonid).value="like "+(likecount+1)+"";
+  }
+}
+
+async function comments_adding(tweet_id,source_where_display)
+{
+  let comments_total=await  ajaxcallingget('GET','/comments',tweet_id)
+  console.log("comments of this tweets are=",comments_total)
+  let retain_id=source_where_display;
+ 
+  let len=comments_total.data.length
+  comments_total=comments_total.data;
+  comment_data="<table border='2'>"
+  for(let i=0;i<len;i++)
+  {
+    comment_data+="<tr>";
+    comment_data+="<td><b>uname=</b>"+comments_total[i].uname+"</td>"
+    comment_data+="<td><b>comment=</b>"+comments_total[i].comments+"</td>"
+    comment_data+="<td><b>comments time=</b>"+comments_total[i].comment_time+"</td></tr>"
+  }
+  comment_data+="<input type='text' id='add_comments' name='add_comments' placeholder='enter the comments'><input type='button' value='Comment' onclick=add_comment("+tweet_id+",'1','add_comments',"+retain_id+")>" 
+  document.getElementById(source_where_display).innerHTML=comment_data;
+}
+
+async function add_comment(tweet_id,source_id,comment_written,retain_id)
+{
+  if(document.getElementById(comment_written).value!=null)
+  {
+    let data=await ajaxcalling("POST", '/comment/add', tweet_id,document.getElementById(comment_written).value);
+    location.reload();
+  }
+}
+function ajaxcalling(method,url,data,comment=0)
+{
+  return new Promise((resolve,reject)=>{
+  let xhttp10 = new XMLHttpRequest();
+  xhttp10.onreadystatechange = function() {
+    console.log("enteered into ajax")
+      if (this.readyState == 4 && this.status == 200) {
+          return resolve(this.responseText)
+           }
+  };   
+  xhttp10.open(method, url, true);
+  xhttp10.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhttp10.send("tweet_id="+data+"&comment="+comment);
+})
+}
+function ajaxcallingget(method,url,data)
+{
+  console.log("enter into ajaxcallingget")
+  return new Promise((resolve,reject)=>{
+  let xhttp10 = new XMLHttpRequest();
+  xhttp10.onreadystatechange = function() {
+    console.log("enteered into ajax")
+      if (this.readyState == 4 && this.status == 200) {
+          return resolve(JSON.parse(this.responseText))
+           }
+  };   
+  xhttp10.open(method, url+"?tweet_id="+data, true);
+  xhttp10.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhttp10.send();
+})
+}
+
+</script>
+</body>
+  </html>
